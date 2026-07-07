@@ -5,4 +5,4 @@
 
 I used [tool name] to add a capybara to the provided picture.
 
-![](task1/capybara.png)
+![](capybara.png)
