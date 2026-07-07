@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPA Calculator — Computer Science (Major)</title>
+<style>
+  :root{
+    --paper:#0f1720;
+    --panel:#161f2b;
+    --panel-2:#1c2733;
+    --ink:#e7edf3;
+    --ink-dim:#9fb0c0;
+    --rule:#2a3a49;
+    --accent:#3fb08f;
+    --accent-2:#e8b04b;
+    --fail:#d9636c;
+    --font-display: 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+    --font-body: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'SF Mono', 'Courier New', monospace;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      linear-gradient(180deg, var(--paper), #0b121a 70%);
+    color:var(--ink);
+    font-family:var(--font-body);
+    min-height:100vh;
+    padding:32px 20px 80px;
+  }
+
+  .sheet{
+    max-width:960px;
+    margin:0 auto;
+  }
+
+  .ledger-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    border-bottom:2px solid var(--accent);
+    padding-bottom:18px;
+    margin-bottom:6px;
+    gap:20px;
+    flex-wrap:wrap;
+  }
+
+  .ledger-head h1{
+    font-family:var(--font-display);
+    font-weight:600;
+    font-size:2.1rem;
+    margin:0 0 4px;
+    letter-spacing:0.3px;
+  }
+  .ledger-head .sub{
+    color:var(--ink-dim);
+    font-size:0.95rem;
+  }
+
+  .program-tag{
+    text-align:right;
+    font-family:var(--font-mono);
+    font-size:0.8rem;
+    color:var(--ink-dim);
+    line-height:1.5;
+  }
+  .program-tag .name{
+    display:block;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:1.05rem;
+    color:var(--accent-2);
+    margin-bottom:2px;
+  }
+
+  .info-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin:22px 0 14px;
+    position:relative;
+  }
+  .info-row .caption{
+    font-size:0.92rem;
+    color:var(--ink-dim);
+  }
+  .info-icon{
+    width:22px;height:22px;
+    border-radius:50%;
+    border:1.5px solid var(--accent);
+    color:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-display);
+    font-style:italic;
+    font-weight:700;
+    font-size:0.85rem;
+    cursor:pointer;
+    flex-shrink:0;
+    user-select:none;
+    transition:background 0.15s, color 0.15s;
+  }
+  .info-icon:hover, .info-icon:focus-visible{
+    background:var(--accent);
+    color:#08120e;
+    outline:none;
+  }
+
+  .tooltip{
+    display:none;
+    position:relative;
+    margin:10px 0 24px;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-left:3px solid var(--accent);
+    border-radius:6px;
+    padding:20px 24px;
+    max-height:420px;
+    overflow-y:auto;
+    font-size:0.9rem;
+    line-height:1.6;
+    color:var(--ink);
+  }
+  .tooltip.open{display:block;}
+  .tooltip h3{
+    font-family:var(--font-display);
+    color:var(--accent-2);
+    margin:18px 0 8px;
+    font-size:1.05rem;
+  }
+  .tooltip h3:first-child{margin-top:0;}
+  .tooltip ol{padding-left:20px;}
+  .tooltip li{margin-bottom:6px;}
+  .tooltip table{
+    width:100%;
+    border-collapse:collapse;
+    margin:10px 0 4px;
+    font-family:var(--font-mono);
+    font-size:0.8rem;
+  }
+  .tooltip table th, .tooltip table td{
+    border:1px solid var(--rule);
+    padding:6px 8px;
+    text-align:center;
+  }
+  .tooltip table th{background:var(--panel-2); color:var(--accent-2);}
+  .tooltip .formula{
+    font-family:var(--font-mono);
+    background:var(--panel-2);
+    padding:10px 14px;
+    border-radius:4px;
+    display:inline-block;
+    margin:6px 0;
+  }
+  .tooltip .foot{
+    color:var(--ink-dim);
+    font-size:0.8rem;
+    border-top:1px dashed var(--rule);
+    padding-top:10px;
+    margin-top:14px;
+  }
+
+  table.courses{
+    width:100%;
+    border-collapse:collapse;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:8px;
+    overflow:hidden;
+  }
+  table.courses thead th{
+    background:var(--panel-2);
+    text-align:left;
+    padding:11px 14px;
+    font-size:0.75rem;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--accent-2);
+    border-bottom:1px solid var(--rule);
+  }
+  table.courses td{
+    padding:9px 14px;
+    font-size:0.88rem;
+    border-bottom:1px solid var(--rule);
+  }
+  table.courses tbody tr:last-child td{border-bottom:none;}
+  table.courses tbody tr:hover{background:rgba(63,176,143,0.06);}
+  td.num, th.num{text-align:right; font-family:var(--font-mono); white-space:nowrap;}
+  td.pass-yes{color:var(--accent); font-weight:600;}
+  td.pass-no{color:var(--fail); font-weight:600;}
+  tr.added-row{background:rgba(232,176,75,0.05);}
+  tr.added-row td.course-name::after{
+    content:" (added)";
+    color:var(--ink-dim);
+    font-weight:400;
+    font-size:0.75rem;
+  }
+  tr.in-progress td.course-name::after{
+    content:" (in progress)";
+    color:var(--ink-dim);
+    font-weight:400;
+    font-size:0.75rem;
+  }
+
+  .actions{
+    display:flex;
+    gap:14px;
+    margin:28px 0 6px;
+    flex-wrap:wrap;
+  }
+  button.calc{
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:0.92rem;
+    padding:13px 22px;
+    border-radius:6px;
+    border:1px solid var(--rule);
+    background:var(--panel-2);
+    color:var(--ink);
+    cursor:pointer;
+    transition:transform 0.1s, border-color 0.15s;
+  }
+  button.calc:hover{border-color:var(--accent); transform:translateY(-1px);}
+  button.calc.primary{
+    background:var(--accent);
+    color:#08120e;
+    border-color:var(--accent);
+  }
+  button.calc.primary:hover{background:#4ec49f;}
+  button.calc.exam{
+    background:var(--accent-2);
+    color:#221900;
+    border-color:var(--accent-2);
+  }
+  button.calc.exam:hover{background:#f0bd63;}
+
+  .exam-note{
+    font-size:0.82rem;
+    color:var(--ink-dim);
+    max-width:520px;
+    margin-top:2px;
+  }
+
+  .results{
+    margin-top:22px;
+    display:flex;
+    gap:16px;
+    flex-wrap:wrap;
+  }
+  .result-card{
+    display:none;
+    background:var(--panel);
+    border:1px solid var(--rule);
+    border-radius:8px;
+    padding:16px 22px;
+    min-width:220px;
+  }
+  .result-card.show{display:block;}
+  .result-card .label{
+    font-size:0.75rem;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--ink-dim);
+  }
+  .result-card .value{
+    font-family:var(--font-display);
+    font-size:2rem;
+    color:var(--accent);
+    margin-top:2px;
+  }
+  .result-card.exam .value{color:var(--accent-2);}
+  .result-card .detail{
+    font-size:0.78rem;
+    color:var(--ink-dim);
+    margin-top:6px;
+    font-family:var(--font-mono);
+  }
+
+  footer.note{
+    margin-top:34px;
+    font-size:0.78rem;
+    color:var(--ink-dim);
+    border-top:1px solid var(--rule);
+    padding-top:14px;
+  }
+
+  @media (max-width:640px){
+    .ledger-head{flex-direction:column; align-items:flex-start;}
+    .program-tag{text-align:left;}
+    table.courses{font-size:0.78rem;}
+    table.courses thead th, table.courses td{padding:7px 8px;}
+  }
+</style>
+</head>
+<body>
+<div class="sheet">
+
+  <div class="ledger-head">
+    <div>
+      <h1>GPA Ledger</h1>
+      <div class="sub">Course transcript &amp; grade point calculation</div>
+    </div>
+    <div class="program-tag">
+      <span class="name" id="programName">Computer Science (Major) (ENG)</span>
+      Faculty of Business, Technology and Education<br>
+      School of Technology
+    </div>
+  </div>
+
+  <div class="info-row">
+    <button class="info-icon" id="infoBtn" aria-expanded="false" aria-controls="infoTooltip" title="About the GPA formula">i</button>
+    <span class="caption">Click the icon for the official Ilia State University GPA policy (translated).</span>
+  </div>
+
+  <div class="tooltip" id="infoTooltip" role="region" aria-label="GPA policy">
+    <h3>Ilia State University — GPA Calculation Policy</h3>
+    <p>At Ilia State University, the GPA (Grade Point Average) is the sum, across all courses, of each course's Grade Point (GP) multiplied by its credits, divided by the total credits of the courses the student has passed:</p>
+    <div class="formula">GPA = &Sigma;(GP&nbsp;&times;&nbsp;credits) / &Sigma;(credits of passed courses)</div>
+    <p>GP is a course grade converted onto a 4-point scale.</p>
+
+    <h3>Grade categories</h3>
+    <table>
+      <thead><tr><th>Grade</th><th>Score range</th><th>GP at top of range</th></tr></thead>
+      <tbody>
+        <tr><td>F</td><td>0&ndash;50</td><td>0.00 (Fail)</td></tr>
+        <tr><td>E</td><td>51&ndash;60</td><td>1.00</td></tr>
+        <tr><td>D</td><td>61&ndash;70</td><td>1.83</td></tr>
+        <tr><td>C</td><td>71&ndash;80</td><td>2.67</td></tr>
+        <tr><td>B</td><td>81&ndash;90</td><td>3.50</td></tr>
+        <tr><td>A</td><td>91&ndash;95</td><td>3.92</td></tr>
+        <tr><td>A+</td><td>96&ndash;100</td><td>4.00</td></tr>
+      </tbody>
+    </table>
+    <p>A grade in the E category is always a fixed 1.00 GP. Grades in the D, C, B and A categories (61&ndash;95 points) rise in equal steps of 1/12 (&asymp;0.08) per point. A grade in the A+ category is fixed at 4.00 GP.</p>
+    <p class="foot">Within the E and A+ ranges the GP does not change point-to-point, because the university treats every score in those ranges as equally low (E) or equally outstanding (A+).</p>
+
+    <h3>Additional rules</h3>
+    <ol>
+      <li>GPA is issued for every academic program at Ilia State University except doctoral studies; it is not issued for certificate programs.</li>
+      <li>The university only issues one final, cumulative GPA, shown on the diploma supplement (this does not apply to the single-cycle Medical Doctor program).</li>
+      <li>The final GPA is rounded to one decimal place.</li>
+    </ol>
+  </div>
+
+  <table class="courses" id="courseTable">
+    <thead>
+      <tr>
+        <th>Course</th>
+        <th class="num">Credit</th>
+        <th class="num">Grade</th>
+        <th>Passed</th>
+      </tr>
+    </thead>
+    <tbody id="courseBody"></tbody>
+  </table>
+
+  <div class="actions">
+    <div>
+      <button class="calc primary" id="calcBtn">Calculate</button>
+    </div>
+    <div>
+      <button class="calc exam" id="calcExamBtn">Calculate with Introduction to AI</button>
+      <div class="exam-note">Assumes the "Introduction to AI" final score = current accumulated points (70) + 30 final&#8209;exam points = 100, and includes this course in the GPA.</div>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="result-card" id="resultCard">
+      <div class="label">GPA</div>
+      <div class="value" id="resultValue">—</div>
+      <div class="detail" id="resultDetail"></div>
+    </div>
+    <div class="result-card exam" id="resultCardExam">
+      <div class="label">GPA with Introduction to AI</div>
+      <div class="value" id="resultValueExam">—</div>
+      <div class="detail" id="resultDetailExam"></div>
+    </div>
+  </div>
+
+  <footer class="note">
+    "Passed" reflects whether credit was actually earned for the course on the transcript. Courses still in progress (no final grade yet) are excluded from both GPA calculations below, except "Introduction to AI", which is added back in for the second calculation using its assumed final score.
+  </footer>
+
+</div>
+
+<script>
+  // Transcript data (course, credit, score, gainedCredit, inProgress, added)
+  const courses = [
+    ["Academic Techniques (ENG)", 6, 63.00, 6, false, false],
+    ["Basics of Physics II (ENG)", 6, 57.75, 6, false, false],
+    ["Calculus I (ENG)", 6, 56.00, 6, false, false],
+    ["English Language Course C1-1 (ENG)", 6, 83.90, 6, false, false],
+    ["English Language Course C1-2 (ENG)", 6, 76.70, 6, false, false],
+    ["Introduction to Modern Thought I (ENG)", 6, 56.00, 6, false, false],
+    ["Introduction to Modern Thought II (ENG)", 6, 67.00, 6, false, false],
+    ["Introduction to Programming (ENG)", 6, 69.70, 6, false, false],
+    ["Algorithms and Data Structures (ENG)", 6, 75.00, 6, false, false],
+    ["Basics of Physics I (including Lab) (ENG)", 8, 64.50, 8, false, false],
+    ["Calculus II (ENG)", 6, 54.00, 6, false, false],
+    ["Calculus III (ENG)", 6, 56.00, 6, false, false],
+    ["Computational Linguistics (ENG)", 6, 57.00, 6, false, false],
+    ["Computational and Statistical Methods (ENG)", 6, 60.00, 6, false, false],
+    ["Computer Organization (ENG)", 6, 73.77, 6, false, false],
+    ["Computer and Data Networks (ENG)", 6, 94.80, 6, false, false],
+    ["Computer and Society (ENG)", 6, 59.00, 0, false, false],
+    ["Cyberlaw and Ethics (ENG)", 6, 91.00, 6, false, false],
+    ["Databases and Information Systems (ENG)", 6, 70.00, 6, false, false],
+    ["Design Patterns (ENG)", 6, 87.00, 6, false, false],
+    ["DevOps Technologies (ENG)", 6, 0.00, 0, true, false],
+    ["Distributed and Parallel Computing", 6, 68.10, 6, false, false],
+    ["Drones (ENG)", 6, 78.00, 6, false, false],
+    ["Elements of Computational Complexity (ENG)", 6, 0.00, 0, true, false],
+    ["Elements of Computational Complexity (ENG)", 6, 0.00, 0, true, false],
+    ["Functional Programming (ENG)", 6, 78.00, 6, false, false],
+    ["IT Project Management (ENG)", 6, 100.00, 6, false, false],
+    ["Introduction to Artificial Intelligence (ENG)", 6, 70.00, 0, true, false],
+    ["Introduction to Cyber Security (ENG)", 6, 82.00, 6, false, false],
+    ["Introduction to Linear Algebra (ENG)", 6, 75.00, 6, false, false],
+    ["Introduction to Operating Systems (ENG)", 6, 86.00, 6, false, false],
+    ["Introduction to machine learning (ENG)", 6, 78.90, 6, false, false],
+    ["Mathematical Foundation of Computing (ENG)", 6, 68.00, 6, false, false],
+    ["Mobile Applications Development (ENG)", 6, 63.00, 6, false, false],
+    ["Nand2Tetris (ENG)", 6, 28.00, 0, false, false],
+    ["Object Oriented Programming (ENG)", 6, 65.65, 6, false, false],
+    ["Principles of Numerical Methods (ENG)", 6, 85.00, 6, false, false],
+    ["Programming Languages (ENG)", 6, 72.00, 6, false, false],
+    ["Web Programming (ENG)", 6, 0.00, 0, true, false],
+    ["Web Programming (ENG)", 6, 64.00, 6, false, false],
+    // 5 additional courses from the program (assumed A+/100, 6 credits, passed)
+    ["Data Mining (ENG)", 6, 100.00, 6, false, true],
+    ["Computer Graphics (ENG)", 6, 100.00, 6, false, true],
+    ["Software Engineering (ENG)", 6, 100.00, 6, false, true],
+    ["Cloud Computing (ENG)", 6, 100.00, 6, false, true],
+    ["Human-Computer Interaction (ENG)", 6, 100.00, 6, false, true],
+  ];
+
+  const INTRO_AI_INDEX = courses.findIndex(c => c[0] === "Introduction to Artificial Intelligence (ENG)");
+  const INTRO_AI_ACCUMULATED = 70;
+  const FINAL_EXAM_POINTS = 30;
+
+  function scoreToGP(score){
+    if (score <= 50) return 0;
+    if (score <= 60) return 1.00;
+    if (score <= 95) return 1.00 + (score - 60) / 12;
+    return 4.00;
+  }
+
+  function renderTable(){
+    const tbody = document.getElementById("courseBody");
+    tbody.innerHTML = "";
+    courses.forEach(([name, credit, score, gained, inProgress, added]) => {
+      const tr = document.createElement("tr");
+      if (added) tr.classList.add("added-row");
+      if (inProgress) tr.classList.add("in-progress");
+
+      const passed = gained > 0 ? "Yes" : "No";
+      tr.innerHTML = `
+        <td class="course-name">${name}</td>
+        <td class="num">${credit}</td>
+        <td class="num">${score.toFixed(2)}</td>
+        <td class="${passed === "Yes" ? "pass-yes" : "pass-no"}">${passed}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function computeGPA(overrideIntroAI){
+    let weightedSum = 0;
+    let creditSum = 0;
+    let countedCourses = 0;
+
+    courses.forEach((row, idx) => {
+      let [name, credit, score, gained, inProgress, added] = row;
+
+      if (idx === INTRO_AI_INDEX && overrideIntroAI) {
+        score = INTRO_AI_ACCUMULATED + FINAL_EXAM_POINTS;
+        inProgress = false;
+      }
+
+      if (inProgress) return; // exclude courses without a final grade
+
+      const gp = scoreToGP(score);
+      weightedSum += gp * credit;
+      creditSum += credit;
+      countedCourses++;
+    });
+
+    const gpa = creditSum > 0 ? weightedSum / creditSum : 0;
+    return { gpa: Math.round(gpa * 10) / 10, creditSum, countedCourses };
+  }
+
+  document.getElementById("infoBtn").addEventListener("click", () => {
+    const tip = document.getElementById("infoTooltip");
+    const btn = document.getElementById("infoBtn");
+    const isOpen = tip.classList.toggle("open");
+    btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+  });
+
+  document.getElementById("calcBtn").addEventListener("click", () => {
+    const { gpa, creditSum, countedCourses } = computeGPA(false);
+    const card = document.getElementById("resultCard");
+    card.classList.add("show");
+    document.getElementById("resultValue").textContent = gpa.toFixed(1);
+    document.getElementById("resultDetail").textContent =
+      `${countedCourses} completed courses · ${creditSum} credits`;
+  });
+
+  document.getElementById("calcExamBtn").addEventListener("click", () => {
+    const { gpa, creditSum, countedCourses } = computeGPA(true);
+    const card = document.getElementById("resultCardExam");
+    card.classList.add("show");
+    document.getElementById("resultValueExam").textContent = gpa.toFixed(1);
+    document.getElementById("resultDetailExam").textContent =
+      `${countedCourses} completed courses · ${creditSum} credits (incl. Introduction to AI = ${INTRO_AI_ACCUMULATED + FINAL_EXAM_POINTS})`;
+  });
+
+  renderTable();
+</script>
+</body>
+</html>
