@@ -49,8 +49,9 @@ This manual explains how to sign up for ChatGPT and use it to add a capybara to 
 **Original picture:**
 ![](picture-template.jpeg)
 
-## Task 3 — Chatbot Graph
-![](graph.png)
-
 **Final picture with capybara:**
 ![](task1-capybara.webp)
+
+
+## Task 3 — Chatbot Graph
+![](graph.png)
